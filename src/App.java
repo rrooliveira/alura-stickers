@@ -1,27 +1,32 @@
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
+import java.io.InputStream;
+import java.net.URL;
 import java.util.List;
-import java.util.Map;
 
 public class App {
     public static void main(String[] args) throws Exception {
-        //Get movies
-        String url = "https://alura-imdb-api.herokuapp.com/movies";
-        URI address = URI.create(url);
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder(address).GET().build();
+        //Get Movies Imdb
+        String url = "https://api.mocki.io/v2/549a5d8b/Top250Movies";
+        ContentExtractor extractor = new ImdbContentExtractor();
 
-        HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
-        String body = response.body();
+        // Get Nasa Images
+        //String url = "https://api.mocki.io/v2/549a5d8b/NASA-APOD";
+        //ContentExtractor extractor = new NasaContentExtractor();
 
-        JsonParser parser = new JsonParser();
-        List<Map<String, String>> MoviesList = parser.parse(body);
-    
-        for (Map<String, String> movie : MoviesList) {
-            System.out.println(movie.get("title"));
+        var clientHttp = new ClientHttp();
+        String json = clientHttp.getData(url);
+
+        List<Content> contents = extractor.extractContent(json);
+
+        var generator = new ImageGenerator();
+        for (int i = 0; i < 3; i++) {
+            Content content = contents.get(i);
+            String fileName = content.getTitle() + ".png";
+
+            InputStream inputStream = new URL(content.getUrlImage()).openStream();   
+            generator.generate(inputStream, fileName);
+
+            System.out.println(content.getTitle());
+            System.out.println();
         }
     }
 }
